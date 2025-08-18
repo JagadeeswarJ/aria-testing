@@ -1,98 +1,55 @@
+const conversation = require("./coversations");
 const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: "local-bot" }),
   puppeteer: {
-    headless: false,
+    headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   },
 });
 
-const chatId = "917075471676@c.us";
+// === CONFIG ===
+const chatId = "917075471676@c.us"; // target user
+const MIN_DELAY_AFTER_REPLY_MS = 2500;
 
-// Conversation steps (predefined)
-const conversation = [
-  { type: "text", content: "clear context" },
-  { type: "text", content: "hi" },
-  { type: "text", content: "/dashboard" },
-  { type: "text", content: "/tutorials" },
-  { type: "text", content: "cancel my subscription" },
-  { type: "text", content: "what is my name" },
-  { type: "text", content: "who are u" },
-  { type: "text", content: "upgrade my subscription" },
-  { type: "text", content: "what can u do" },
-  { type: "text", content: "what is time" },
-  { type: "text", content: "downgrade my subscription" },
-  { type: "text", content: "list my todos" },
-  {
-    type: "text",
-    content:
-      "create a todo list called engineering and add ACD, DSA, WEB DEV, AI to it",
-  },
-  {
-    type: "text",
-    content: "add CNEH to engineering list",
-  },
-  {
-    type: "text",
-    content:
-      "add to car cleaning todo list - wheel alignment, car wash, mat cleanup",
-  },
-  {
-    type: "text",
-    content: "mark ACD as done",
-  },
-  {
-    type: "text",
-    content: "list all my todos",
-  },
-  {
-    type: "text",
-    content: "show engineering list",
-  },
-  {
-    type: "text",
-    content: "delete car cleaning list",
-  },
-  {
-    type: "text",
-    content:
-      "add to car cleaning todo list - wheel alignment, car wash, mat cleanup",
-  },
-  {
-    type: "text",
-    content:
-      "add to car cleaning todo list - wheel alignment, car wash, mat cleanup",
-  },
-  { type: "text", content: "remind me to go to clg tomorrow at 10am" },
-  { type: "text", content: "remind me to go on a walk at 14 H" },
-  { type: "text", content: "remind mom to take tablet in 10mins" },
-  { type: "text", content: "remind Tharun anna to take sleep in 20 mins" },
-  {
-    type: "text",
-    content:
-      "draft an email to sparkscj110@gmail.com, that we have party tomorrow",
-  },
-  { type: "text", content: "send this mail" },
-  { type: "image", file: "./images/test1.jpg" },
-  {
-    type: "text",
-    content: "add this to drive",
-  },
-  {
-    type: "text",
-    content: "list my reminder",
-  },
-  {
-    type: "text",
-    content: "remind me everyday at 10am to drink 1 liter of water",
-  },
-];
-
+// === RUNTIME STATE ===
 let step = 0;
-let lastReplyTime = 0;
+let conversationStartedAt = 0; // ms epoch — only accept replies after this
+let waitingForReply = false; // true after we send a step
+let sending = false; // prevent overlapping sends
+const processedMsgIds = new Set();
 
+// === HELPERS ===
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function sendStep() {
+  if (sending) return;
+  if (step >= conversation.length) {
+    console.log("✅ Conversation finished");
+    waitingForReply = false;
+    return;
+  }
+  sending = true;
+
+  const current = conversation[step];
+  try {
+    if (current.type === "text") {
+      await client.sendMessage(chatId, current.content);
+    } else if (current.type === "image") {
+      const media = MessageMedia.fromFilePath(current.file);
+      await client.sendMessage(chatId, media);
+    }
+    step += 1;
+
+    waitingForReply = true;
+  } finally {
+    sending = false;
+  }
+}
+
+// === EVENTS ===
 client.on("qr", (qr) => {
   console.log("Scan this QR with WhatsApp:");
   qrcode.generate(qr, { small: true });
@@ -103,35 +60,40 @@ client.on("authenticated", () => console.log("✅ Authenticated"));
 client.on("ready", async () => {
   console.log("✅ Client is ready");
 
+  conversationStartedAt = Date.now();
+  waitingForReply = false;
   await sendStep();
 });
 
+// Only react to *incoming* messages from the target user
 client.on("message", async (msg) => {
+  // Guard: correct chat + not our own message
   if (msg.from !== chatId) return;
+  if (msg.fromMe) return;
 
-  lastReplyTime = Date.now();
+  // Only handle messages **newer** than our start ime
+  const msgTimeMs = (msg.timestamp || 0) * 1000;
+  if (!conversationStartedAt || msgTimeMs < conversationStartedAt) return;
 
-  setTimeout(async () => {
-    await sendStep();
-  }, 500);
+  const id =
+    (msg.id && (msg.id._serialized || msg.id.id)) || `${msgTimeMs}:${msg.from}`;
+  if (processedMsgIds.has(id)) return;
+  processedMsgIds.add(id);
+
+  if (!waitingForReply) return;
+
+  waitingForReply = false;
+  await sleep(MIN_DELAY_AFTER_REPLY_MS);
+  await sendStep();
 });
 
-async function sendStep() {
-  if (step >= conversation.length) {
-    console.log("✅ Conversation finished");
-    return;
-  }
-
-  const current = conversation[step];
-
-  if (current.type === "text") {
-    await client.sendMessage(chatId, current.content);
-  } else if (current.type === "image") {
-    const media = MessageMedia.fromFilePath(current.file);
-    await client.sendMessage(chatId, media, { caption: current.caption });
-  }
-
-  step++;
-}
+// (Optional) For debugging, you can see both incoming/outgoing creates:
+client.on("message_create", (m) => {
+  console.log("message_create", {
+    fromMe: m.fromMe,
+    from: m.from,
+    body: m.body,
+  });
+});
 
 client.initialize();
