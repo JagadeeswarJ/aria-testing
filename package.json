@@ -1,0 +1,25 @@
+{
+  "name": "aria-testing",
+  "version": "1.0.0",
+  "main": "WH-messaging-bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JagadeeswarJ/aria-testing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JagadeeswarJ/aria-testing/issues"
+  },
+  "homepage": "https://github.com/JagadeeswarJ/aria-testing#readme",
+  "description": "",
+  "dependencies": {
+    "puppeteer": "^24.16.2",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.32.0"
+  }
+}
