@@ -1,4 +1,4 @@
-export const conversation = [
+const conversation = [
   { type: "text", content: "clear context" },
   { type: "text", content: "hi" },
   { type: "text", content: "/dashboard" },
@@ -54,3 +54,5 @@ export const conversation = [
     content: "remind me everyday at 10am to drink 1 liter of water",
   },
 ];
+
+module.exports = conversation;
