@@ -12,7 +12,7 @@ const client = new Client({
 
 // === CONFIG ===
 const chatId = "917075471676@c.us"; // target user
-const MIN_DELAY_AFTER_REPLY_MS = 2500;
+const getRandomDelay = () => Math.floor(Math.random() * (9000 - 3000 + 1)) + 5000;
 
 // === RUNTIME STATE ===
 let step = 0;
@@ -83,7 +83,7 @@ client.on("message", async (msg) => {
   if (!waitingForReply) return;
 
   waitingForReply = false;
-  await sleep(MIN_DELAY_AFTER_REPLY_MS);
+  await sleep(getRandomDelay());
   await sendStep();
 });
 
