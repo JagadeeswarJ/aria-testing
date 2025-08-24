@@ -39,7 +39,10 @@ const conversation = [
   { type: "text", content: "remind me to go to clg tomorrow at 10am" },
   { type: "text", content: "remind me to go on a walk at 14 H" },
   { type: "text", content: "remind mom to take tablet in 10mins" },
-  { type: "text", content: "remind Tharun anna to take sleep in 20 mins" },
+  {
+    type: "text",
+    content: "remind sai teja to learn DSA or get F'ed up in 4H",
+  },
   {
     type: "text",
     content:
@@ -53,6 +56,18 @@ const conversation = [
     type: "text",
     content: "remind me everyday at 10am to drink 1 liter of water",
   },
+  { type: "text", content: "create a meet link for tomorrow's standup" },
+  {
+    type: "text",
+    content: "schedule team meeting with meet link for Friday 10am",
+  },
+  { type: "text", content: "send message to sai teja saying learn DSA now" },
+
+  { type: "text", content: "search for latest iPhone 15 reviews" },
+  { type: "text", content: "google search React best practices 2024" },
+  { type: "text", content: "change my timezone to EST" },
+  { type: "text", content: "what is my time now" },
+  { type: "text", content: "set timezone to IST" },
 ];
 
 module.exports = conversation;
