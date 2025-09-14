@@ -12,7 +12,7 @@ const client = new Client({
 
 // === CONFIG ===
 const chatId = "917075471676@c.us"; // target user
-const getRandomDelay = () => Math.floor(Math.random() * (4000 - 3000 + 1)) + 3000;
+const getRandomDelay = () => Math.floor(Math.random() * (7000 - 3000 + 1)) + 3000;
 // const getRandomDelay = () => 2000;
 
 // === RUNTIME STATE ===
